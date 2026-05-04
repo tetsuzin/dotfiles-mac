@@ -1,0 +1,6 @@
+[tools]
+bat = "latest"
+dotnet = "10"
+biome = "latest"
+fzf = "latest"
+python = "3"

@@ -1,0 +1,34 @@
+{ pkgs, ... }:
+
+{
+  imports = [
+    ./dotfiles-linker.nix
+    ./k8s.nix
+  ];
+
+  home.packages = with pkgs; [
+    git
+    git-lfs
+    gh
+    curl
+    wget
+    eclint
+    jq
+    docker-client
+    act
+    starship
+    eza
+    zoxide
+    shfmt
+    fastfetchMinimal
+    lazygit
+    fzf
+    bat
+    ghq
+    btop
+
+    # AWS
+    awscli
+    aws-vault
+  ];
+}
