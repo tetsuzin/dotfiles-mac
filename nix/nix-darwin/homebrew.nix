@@ -28,9 +28,7 @@
 
       # 開発ツール
       "mise"
-
-      # ユーティリティ
-      "fastfetch"
+      "container"
     ];
 
     # brew install --cask (GUIアプリ)
@@ -46,7 +44,7 @@
       "visual-studio-code"
 
       # ネットワークツール
-      "tailscale"
+      "tailscale-app"
       "wifiman"
 
       # ユーティリティ

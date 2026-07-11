@@ -5,6 +5,10 @@
     settings.experimental-features = [ "nix-command" "flakes" ];
   };
 
+  users.users.${user} = {
+    home = "/Users/${user}";
+  };
+
   # sudo で TouchID を使う
   security.pam.services.sudo_local.touchIdAuth = true;
 
