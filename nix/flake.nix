@@ -5,7 +5,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nix-darwin = {
       url = "github:LnL7/nix-darwin";
-      inputs.nixpkgs.follows = "nixpkg  s";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -33,14 +33,9 @@
       modules = [
         ./nix-darwin/_main.nix
         nix-homebrew.darwinModules.nix-homebrew
+        home-manager.darwinModules.home-manager
       ];
       specialArgs = { inherit user; };
-    };
-    
-    homeConfigurations."${user}" = home-manager.lib.homeManagerConfiguration {
-      inherit (nixpkgs.legacyPackages.${system}) pkgs;
-      modules = [ ./home-manager/_main.nix ];
-      extraSpecialArgs = { inherit user; };
     };
   };
 }
