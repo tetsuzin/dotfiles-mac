@@ -20,15 +20,17 @@
     eza
     zoxide
     shfmt
-    fastfetchMinimal
+    fastfetch.minimal
     lazygit
     fzf
     bat
     ghq
     btop
+    bitwarden-cli
+    nh
 
     # AWS
-    awscli
+    awscli2
     aws-vault
   ];
 }

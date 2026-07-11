@@ -9,9 +9,7 @@ in {
     ./themes/themes.nix
   ];
 
-  home.username = user;
   home.stateVersion = "26.05";
-  home.homeDirectory = "/Users/${user}";
 
   programs.home-manager.enable = true;
 
@@ -23,7 +21,7 @@ in {
   programs.zsh = {
     enable = true;
     enableCompletion = true;
-    initExtra = ''
+    initContent = ''
       # mise を有効化
       eval "$(${pkgs.mise}/bin/mise activate zsh)"
 
@@ -32,8 +30,10 @@ in {
     '';
 
     profileExtra = ''
+      eval "$(/opt/homebrew/bin/brew shellenv)"
+
       # ユーザのカスタム設定を読み込む
-      source ~/.zsh_profile_custom
+      source ~/.zprofile_custom
     '';
   };
 
