@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+# shellcheck disable=SC2148
 
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
