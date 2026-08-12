@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC1091
+source "${SCRIPT_DIR}/_functions"
+
+function usage() {
+  cat <<'EOF'
+Usage: ./setup switch [--debug] [--dry-run] [--update]
+EOF
+}
+
+debug=false
+dry_run=false
+update=false
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --debug) debug=true ;;
+    --dry-run) dry_run=true ;;
+    --update) update=true ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      fail "不明な引数です: $1"
+      ;;
+  esac
+  shift
+done
+
+[[ "${dry_run}" != "true" || "${update}" != "true" ]] ||
+  fail "--dry-run と --update は同時に指定できません"
+
+# shellcheck disable=SC2034 # _functions の log_debug が参照する
+LOG_DEBUG="${debug}"
+log_debug "--debug=${debug}"
+log_debug "--dry-run=${dry_run}"
+log_debug "--update=${update}"
+
+if [[ "${debug}" == "true" ]]; then
+  set -x
+fi
+
+[[ "${EUID}" -ne 0 ]] ||
+  fail "root では実行しないでください。darwin-rebuild が必要とする処理はスクリプト内から sudo を使用します"
+
+command -v nix &>/dev/null ||
+  fail "Nix が見つかりません。先に ./setup prepare を実行してください"
+
+nix_version="$(nix --version | head -n 1)"
+
+REPO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+DOTFILES_DIR="${REPO_DIR}/dotfiles"
+NIX_DIR="${REPO_DIR}/nix"
+user="$(id -un)"
+host="$(scutil --get LocalHostName)"
+flake_attr="${NIX_DIR}#darwinConfigurations.${host}.system"
+
+# 変数の表示
+log_debug "SCRIPT_DIR: ${SCRIPT_DIR}"
+log_debug "DOTFILES_DIR: ${DOTFILES_DIR}"
+log_debug "NIX_DIR: ${NIX_DIR}"
+log_debug "USER: ${user}"
+log_debug "HOST: ${host}"
+log_debug "NIX: ${nix_version}"
+
+if [[ "${update}" == "true" ]]; then
+  echo
+  log_step "flake.lock の更新"
+  nix flake update --flake "${NIX_DIR}"
+fi
+
+echo
+log_step "nix-darwin の実行"
+
+if [[ "${dry_run}" == "true" ]]; then
+  nix build --no-update-lock-file --dry-run "${flake_attr}"
+else
+  system_path="$(
+    nix build \
+      --no-update-lock-file \
+      --no-link \
+      --print-out-paths \
+      "${flake_attr}"
+  )"
+  # nix-darwin 25.05 以降 darwin-rebuild switch は root 権限が必要
+  sudo "${system_path}/sw/bin/darwin-rebuild" switch --flake "${NIX_DIR}#${host}"
+fi
+
+# home-manager (useUserPackages) によってインストールされたパッケージをパスに反映する
+if [[ "${dry_run}" != "true" ]]; then
+  export PATH="/etc/profiles/per-user/${user}/bin:${PATH}"
+fi
+
+echo
+log_step "DotfilesLinker の実行"
+
+export DOTFILES_ROOT="${DOTFILES_DIR}"
+if [[ "${dry_run}" == "true" ]] && ! command -v DotfilesLinker &>/dev/null; then
+  log_warning "DotfilesLinker は nix-darwin 適用後に利用可能になるためスキップします"
+elif [[ "${dry_run}" == "true" ]]; then
+  DotfilesLinker --dry-run
+else
+  command -v DotfilesLinker &>/dev/null ||
+    fail "DotfilesLinker をPATHに反映できませんでした"
+  DotfilesLinker
+fi
+
+echo
+log_step "セットアップ完了"
+log_info "新しいシェルを起動するか、以下を実行してください:"
+log_info "exec zsh"
